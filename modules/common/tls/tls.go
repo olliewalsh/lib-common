@@ -59,6 +59,20 @@ type TLS struct {
 	Ca      *Ca      `json:"ca"`
 }
 
+// +kubebuilder:object:generate:=false
+// DeplomentResources - holding information to be passed in to any deployment require tls certificates
+type DeplomentResources struct {
+	// VolumeMounts -
+	VolumeMounts []corev1.VolumeMount
+	// Volumes -
+	Volumes []corev1.Volume
+
+	// CAVolumeMounts -
+	CAVolumeMounts []corev1.VolumeMount
+	// CAVolumes -
+	CAVolumes []corev1.Volume
+}
+
 // NewTLS - initialize and return a TLS struct
 func NewTLS(ctx context.Context, h *helper.Helper, namespace string, service *Service, ca *Ca) (*TLS, error) {
 

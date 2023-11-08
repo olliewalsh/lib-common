@@ -38,6 +38,10 @@ const (
 type Service struct {
 	// +kubebuilder:validation:Optional
 	SecretName string `json:"secretName,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	IssuerName *string `json:"issuerName,omitempty"`
+
 	// +kubebuilder:validation:Optional
 	DisableNonTLSListeners bool `json:"disableNonTLSListeners,omitempty"`
 }

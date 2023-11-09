@@ -23,6 +23,8 @@ import (
 	"fmt"
 	"strings"
 
+	"golang.org/x/exp/slices"
+
 	"github.com/openstack-k8s-operators/lib-common/modules/common/helper"
 	"github.com/openstack-k8s-operators/lib-common/modules/common/secret"
 	corev1 "k8s.io/api/core/v1"
@@ -62,15 +64,70 @@ type TLS struct {
 // +kubebuilder:object:generate:=false
 // DeplomentResources - holding information to be passed in to any deployment require tls certificates
 type DeplomentResources struct {
-	// VolumeMounts -
-	VolumeMounts []corev1.VolumeMount
 	// Volumes -
-	Volumes []corev1.Volume
+	Volumes []Volume
+}
 
-	// CAVolumeMounts -
-	CAVolumeMounts []corev1.VolumeMount
-	// CAVolumes -
-	CAVolumes []corev1.Volume
+// +kubebuilder:object:generate:=false
+// Volume -
+type Volume struct {
+	// this Volume reflects a CA mount
+	IsCA bool
+	// Volume base of the mounts
+	Volume corev1.Volume
+	// VolumeMounts
+	VolumeMounts []corev1.VolumeMount
+	// Hash of the VolumeMounts. Note: e.g. secret.VerifySecret() can be used to validate
+	// the secret holds the expected keys and returns a hash of the values of the expected fields.
+	Hash string
+}
+
+// GetVolumeMounts - returns all VolumeMounts from a DeplomentResources. If caOnly
+// is provided, only the Volumemounts for CA certs gets returned
+func (d *DeplomentResources) GetVolumeMounts(caOnly bool) []corev1.VolumeMount {
+	volumemounts := []corev1.VolumeMount{}
+
+	for _, vol := range d.Volumes {
+
+		// skip non CA VolumesMounts if caOnly requested
+		if caOnly == true && !vol.IsCA {
+			continue
+		}
+
+		for _, volmnt := range vol.VolumeMounts {
+			// check if the VolumeMount is already in the volumes list
+			f := func(v corev1.VolumeMount) bool {
+				return v.Name == volmnt.Name && v.SubPath == volmnt.SubPath
+			}
+			if idx := slices.IndexFunc(volumemounts, f); idx < 0 {
+				volumemounts = append(volumemounts, volmnt)
+			}
+		}
+	}
+
+	return volumemounts
+}
+
+// GetVolumes - returns all Volumes from a DeplomentResources. If caOnly
+// is provided, only the Volumes for CA certs gets returned
+func (d *DeplomentResources) GetVolumes(caOnly bool) []corev1.Volume {
+	volumes := []corev1.Volume{}
+	for _, vol := range d.Volumes {
+		// skip non CA volumes if caOnly requested
+		if caOnly == true && !vol.IsCA {
+			continue
+		}
+
+		// check if the Volume is already in the volumes list
+		f := func(v corev1.Volume) bool {
+			return v.Name == vol.Volume.Name
+		}
+		if idx := slices.IndexFunc(volumes, f); idx < 0 {
+			volumes = append(volumes, vol.Volume)
+		}
+	}
+
+	return volumes
 }
 
 // NewTLS - initialize and return a TLS struct

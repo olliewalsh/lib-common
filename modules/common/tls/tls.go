@@ -61,15 +61,15 @@ type TLS struct {
 	Ca      *Ca      `json:"ca"`
 }
 
+// DeploymentResources - holding information to be passed in to any deployment require tls certificates
 // +kubebuilder:object:generate:=false
-// DeplomentResources - holding information to be passed in to any deployment require tls certificates
-type DeplomentResources struct {
+type DeploymentResources struct {
 	// Volumes -
 	Volumes []Volume
 }
 
-// +kubebuilder:object:generate:=false
 // Volume -
+// +kubebuilder:object:generate:=false
 type Volume struct {
 	// this Volume reflects a CA mount
 	IsCA bool
@@ -82,15 +82,15 @@ type Volume struct {
 	Hash string
 }
 
-// GetVolumeMounts - returns all VolumeMounts from a DeplomentResources. If caOnly
+// GetVolumeMounts - returns all VolumeMounts from a DeploymentResources. If caOnly
 // is provided, only the Volumemounts for CA certs gets returned
-func (d *DeplomentResources) GetVolumeMounts(caOnly bool) []corev1.VolumeMount {
+func (d *DeploymentResources) GetVolumeMounts(caOnly bool) []corev1.VolumeMount {
 	volumemounts := []corev1.VolumeMount{}
 
 	for _, vol := range d.Volumes {
 
 		// skip non CA VolumesMounts if caOnly requested
-		if caOnly == true && !vol.IsCA {
+		if caOnly && !vol.IsCA {
 			continue
 		}
 
@@ -108,13 +108,13 @@ func (d *DeplomentResources) GetVolumeMounts(caOnly bool) []corev1.VolumeMount {
 	return volumemounts
 }
 
-// GetVolumes - returns all Volumes from a DeplomentResources. If caOnly
+// GetVolumes - returns all Volumes from a DeploymentResources. If caOnly
 // is provided, only the Volumes for CA certs gets returned
-func (d *DeplomentResources) GetVolumes(caOnly bool) []corev1.Volume {
+func (d *DeploymentResources) GetVolumes(caOnly bool) []corev1.Volume {
 	volumes := []corev1.Volume{}
 	for _, vol := range d.Volumes {
 		// skip non CA volumes if caOnly requested
-		if caOnly == true && !vol.IsCA {
+		if caOnly && !vol.IsCA {
 			continue
 		}
 
